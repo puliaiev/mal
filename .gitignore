@@ -114,6 +114,7 @@ scala/mal.jar
 scala/target
 scala/project
 skew/*.js
+swift5/.build
 tcl/mal.tcl
 vb/*.exe
 vb/*.dll
