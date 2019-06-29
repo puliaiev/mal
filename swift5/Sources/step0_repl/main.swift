@@ -1,3 +1,5 @@
+import Foundation
+
 func read(input: String) -> String {
     return input
 }

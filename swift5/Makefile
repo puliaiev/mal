@@ -1,5 +1,11 @@
-.PHONY: step0_repl
+STEPS = step0_repl step1_read_print
 
-step0_repl:
+.PHONY: $(STEPS)
+
+$(STEPS):
 	swift build --product $@
 	ln -s -f .build/debug/$@ $@
+
+clean:
+	rm -rf .build/
+	rm -f $(STEPS)
