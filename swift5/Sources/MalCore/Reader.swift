@@ -1,12 +1,19 @@
 import Foundation
 
-enum ReadError: Error {
+public enum ReadError: Error {
     case readAtom
     case unbalanced
     case readForm
 }
 
-func tokenize(_ input: String) throws -> [String] {
+public func read_str(_ str: String) throws -> MalType {
+    let tokens = try tokenize(str)
+    let reader = Reader(tokens: tokens)
+
+    return try read_form(reader: reader)
+}
+
+private func tokenize(_ input: String) throws -> [String] {
     let specialTwoCharacters = ["~@"]
     let specialSingleCharacters = ["[", "]", "{", "}", "(", ")", "'", "`", "~", "^", "@"]
 
@@ -90,7 +97,7 @@ func tokenize(_ input: String) throws -> [String] {
     return tokens
 }
 
-class Reader {
+private class Reader {
     private let tokens: [String]
     private var currentPosition: Int = 0
 
@@ -118,14 +125,7 @@ class Reader {
     }
 }
 
-func read_str(_ str: String) throws -> MalType {
-    let tokens = try tokenize(str)
-    let reader = Reader(tokens: tokens)
-
-    return try read_form(reader: reader)
-}
-
-func read_form(reader: Reader) throws -> MalType {
+private func read_form(reader: Reader) throws -> MalType {
     guard let token = reader.peek() else { throw ReadError.readForm }
 
     if token == "(" {
@@ -135,7 +135,7 @@ func read_form(reader: Reader) throws -> MalType {
     }
 }
 
-func read_list(reader: Reader) throws -> MalType {
+private func read_list(reader: Reader) throws -> MalType {
     _ = reader.next()
     var list: [MalType] = []
     while let token = reader.peek() {
@@ -150,13 +150,17 @@ func read_list(reader: Reader) throws -> MalType {
     throw ReadError.unbalanced
 }
 
-func read_atom(reader: Reader) throws -> MalType {
+private func read_atom(reader: Reader) throws -> MalType {
     guard let token = reader.next() else { throw ReadError.readAtom }
 
-    return .atom(token)
+    if let number = Int(token) {
+        return .number(number)
+    } else {
+        return .atom(token)
+    }
 }
 
-extension Character {
+private extension Character {
     var string: String {
         return String(self)
     }

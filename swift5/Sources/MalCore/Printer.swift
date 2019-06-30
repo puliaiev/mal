@@ -1,6 +1,6 @@
 import Foundation
 
-func pr_str(ast: MalType) -> String {
+public func pr_str(ast: MalType) -> String {
     var result: String = ""
 
     switch ast {
@@ -10,6 +10,8 @@ func pr_str(ast: MalType) -> String {
         result.append("(")
         result.append(list.map { pr_str(ast: $0) }.joined(separator: " "))
         result.append(")")
+    case .number(let number):
+        result.append("\(number)")
     }
 
     return result

@@ -1,4 +1,5 @@
 import Foundation
+import MalCore
 
 func read(input: String) throws -> MalType {
     return try read_str(input)
