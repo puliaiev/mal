@@ -1,18 +1,28 @@
 import Foundation
 
-public func pr_str(ast: MalType) -> String {
-    var result: String = ""
+public func pr_str(ast: MalType, print_readably: Bool = true) -> String {
+    return ast.description
+}
 
-    switch ast {
-    case .atom(let string):
-        result.append(string)
-    case .list(let list):
-        result.append("(")
-        result.append(list.map { pr_str(ast: $0) }.joined(separator: " "))
-        result.append(")")
-    case .number(let number):
-        result.append("\(number)")
+private extension String {
+    var printReadably: String {
+        var buffer: String = ""
+        buffer.append("\"")
+        for ch in self {
+            switch ch {
+            case "\\":
+                buffer.append("\\")
+            case "\n":
+                buffer.append("\\")
+            case "\"":
+                buffer.append("\\")
+            default:
+                break
+            }
+            buffer.append(ch)
+        }
+        buffer.append("\"")
+
+        return buffer
     }
-
-    return result
 }

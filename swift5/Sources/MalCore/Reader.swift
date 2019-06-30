@@ -35,14 +35,37 @@ private func tokenize(_ input: String) throws -> [String] {
         buffer = ""
     }
 
+    var slashMode = false
+
     for ch in input {
         switch currentMode {
         case .string:
-            buffer.append(ch)
-            if ch == "\"" {
-                saveBuffer()
-                currentMode = .normal
+            if slashMode {
+                switch ch {
+                case "\\":
+                    buffer.append("\\")
+                case "\n":
+                    buffer.append("\n")
+                case "\"":
+                    buffer.append("\"")
+                default:
+                    buffer.append("\\")
+                    buffer.append(ch)
+                }
+                slashMode = false
+            } else {
+                switch ch {
+                case "\\":
+                    slashMode = true
+                case "\"":
+                    currentMode = .normal
+                    buffer.append(ch)
+                    saveBuffer()
+                default:
+                    buffer.append(ch)
+                }
             }
+
         case .comment:
             buffer.append(ch)
             if ch.isNewline {
@@ -141,7 +164,7 @@ private func read_list(reader: Reader) throws -> MalType {
     while let token = reader.peek() {
         if token == ")" {
             _ = reader.next()
-            return .list(list)
+            return List(list: list)
         } else {
             list.append(try read_form(reader: reader))
         }
@@ -154,9 +177,20 @@ private func read_atom(reader: Reader) throws -> MalType {
     guard let token = reader.next() else { throw ReadError.readAtom }
 
     if let number = Int(token) {
-        return .number(number)
+        return Number(value: number)
+    } else if token.first == "\"" {
+        var content = token
+        content.removeLast()
+        content.removeFirst()
+        return MalString(value: content)
+    } else if token == "nil" {
+        return MalNil()
+    } else if token == "true" {
+        return MalTrue()
+    } else if token == "false" {
+        return MalFalse()
     } else {
-        return .atom(token)
+        return Atom(value: token)
     }
 }
 
