@@ -4,6 +4,7 @@ public enum ReadError: Error {
     case readAtom
     case unbalanced
     case readForm
+    case readContainer
 }
 
 public func read_str(_ str: String) throws -> MalType {
@@ -98,10 +99,12 @@ private func tokenize(_ input: String) throws -> [String] {
             }
         case .specialTwo:
             if ch == "@" {
-                tokens.append("~@")
+                buffer.append(ch)
             } else {
                 saveBuffer()
+                buffer.append(ch)
             }
+            saveBuffer()
             currentMode = .normal
         }
     }
@@ -151,26 +154,37 @@ private class Reader {
 private func read_form(reader: Reader) throws -> MalType {
     guard let token = reader.peek() else { throw ReadError.readForm }
 
-    if token == "(" {
-        return try read_list(reader: reader)
+    if let container = try readContainer(token: token, reader: reader) {
+        return container
     } else {
         return try read_atom(reader: reader)
     }
 }
 
-private func read_list(reader: Reader) throws -> MalType {
-    _ = reader.next()
-    var list: [MalType] = []
-    while let token = reader.peek() {
-        if token == ")" {
-            _ = reader.next()
-            return List(list: list)
-        } else {
-            list.append(try read_form(reader: reader))
-        }
-    }
+private func readContainer(token: String, reader: Reader) throws -> MalType? {
+    let containers: [String: (String, ([MalType]) -> MalType)] = [
+        "(": (")", { list in List(list: list) }),
+        "[": ("]", { list in Vector(vector: list) }),
+        "{": ("}", { list in HashMap(elements: list) }),
+    ]
 
-    throw ReadError.unbalanced
+    if containers.keys.contains(token) {
+        guard let container = containers[token] else { throw ReadError.readContainer }
+        _ = reader.next()
+        var list: [MalType] = []
+        while let token = reader.peek() {
+            if token == container.0 {
+                _ = reader.next()
+                return container.1(list)
+            } else {
+                list.append(try read_form(reader: reader))
+            }
+        }
+
+        throw ReadError.unbalanced
+    } else {
+        return nil
+    }
 }
 
 private func read_atom(reader: Reader) throws -> MalType {
@@ -189,6 +203,24 @@ private func read_atom(reader: Reader) throws -> MalType {
         return MalTrue()
     } else if token == "false" {
         return MalFalse()
+    } else if token.hasPrefix(":") {
+        var content = token
+        content.removeFirst()
+        return Keyword(value: content)
+    } else if token == "'" {
+        return List(list: [Atom(value: "quote"), try read_form(reader: reader)])
+    } else if token == "`" {
+        return List(list: [Atom(value: "quasiquote"), try read_form(reader: reader)])
+    } else if token == "~" {
+        return List(list: [Atom(value: "unquote"), try read_form(reader: reader)])
+    } else if token == "~@" {
+        return List(list: [Atom(value: "splice-unquote"), try read_form(reader: reader)])
+    } else if token == "^" {
+        let firstPart = try read_form(reader: reader)
+        let secondPart = try read_form(reader: reader)
+        return List(list: [Atom(value: "with-meta"), secondPart, firstPart])
+    } else if token == "@" {
+        return List(list: [Atom(value: "deref"), try read_form(reader: reader)])
     } else {
         return Atom(value: token)
     }

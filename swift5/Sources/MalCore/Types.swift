@@ -8,6 +8,14 @@ public struct List: MalType {
     let list: [MalType]
 }
 
+public struct Vector: MalType {
+    let vector: [MalType]
+}
+
+public struct HashMap: MalType {
+    let elements: [MalType]
+}
+
 public struct Number: MalType {
     let value: Int
 }
@@ -22,6 +30,10 @@ public struct MalTrue: MalType {}
 
 public struct MalFalse: MalType {}
 
+public struct Keyword: MalType {
+    let value: String
+}
+
 extension Atom: CustomStringConvertible {
     public var description: String {
         return value
@@ -31,6 +43,18 @@ extension Atom: CustomStringConvertible {
 extension List: CustomStringConvertible {
     public var description: String {
         return "(\(list.map { pr_str(ast: $0) }.joined(separator: " ")))"
+    }
+}
+
+extension Vector: CustomStringConvertible {
+    public var description: String {
+        return "[\(vector.map { pr_str(ast: $0) }.joined(separator: " "))]"
+    }
+}
+
+extension HashMap: CustomStringConvertible {
+    public var description: String {
+        return "{\(elements.map { pr_str(ast: $0) }.joined(separator: " "))}"
     }
 }
 
@@ -78,5 +102,11 @@ extension MalTrue: CustomStringConvertible {
 extension MalFalse: CustomStringConvertible {
     public var description: String {
         return "false"
+    }
+}
+
+extension Keyword: CustomStringConvertible {
+    public var description: String {
+        return ":\(value)"
     }
 }
