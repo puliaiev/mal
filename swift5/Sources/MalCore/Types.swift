@@ -1,37 +1,71 @@
 public protocol MalType: CustomStringConvertible {}
 
 public struct Atom: MalType {
-    let value: String
+    public let value: String
+
+    public init(value: String) {
+        self.value = value
+    }
 }
 
 public struct List: MalType {
-    let list: [MalType]
+    public let list: [MalType]
+
+    public init(list: [MalType]) {
+        self.list = list
+    }
 }
 
 public struct Vector: MalType {
-    let vector: [MalType]
+    public let vector: [MalType]
+
+    public init(vector: [MalType]) {
+        self.vector = vector
+    }
 }
 
 public struct HashMap: MalType {
-    let elements: [MalType]
+    public let elements: [MalType]
+
+    public init(elements: [MalType]) {
+        self.elements = elements
+    }
 }
 
 public struct Number: MalType {
-    let value: Int
+    public let value: Int
+
+    public init(value: Int) {
+        self.value = value
+    }
 }
 
 public struct MalString: MalType {
-    let value: String
+    public let value: String
 }
 
-public struct MalNil: MalType {}
+public struct MalNil: MalType {
+    public init() {}
+}
 
 public struct MalTrue: MalType {}
 
 public struct MalFalse: MalType {}
 
 public struct Keyword: MalType {
-    let value: String
+    public let value: String
+}
+
+public struct MalFunction: MalType {
+    public let body: ([MalType]) throws -> MalType
+
+    public init(body: @escaping ([MalType]) throws -> MalType) {
+        self.body = body
+    }
+
+    public func apply(arguments: [MalType]) throws -> MalType {
+        return try body(arguments)
+    }
 }
 
 extension Atom: CustomStringConvertible {
@@ -108,5 +142,11 @@ extension MalFalse: CustomStringConvertible {
 extension Keyword: CustomStringConvertible {
     public var description: String {
         return ":\(value)"
+    }
+}
+
+extension MalFunction: CustomStringConvertible {
+    public var description: String {
+        return "function"
     }
 }
